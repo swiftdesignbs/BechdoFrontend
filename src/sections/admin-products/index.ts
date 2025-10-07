@@ -1,0 +1,1 @@
+export { AdminProductsView } from './admin-products-view';

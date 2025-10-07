@@ -1,0 +1,1 @@
+export { AdminMediaView } from './admin-media-view';
