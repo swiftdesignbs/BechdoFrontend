@@ -220,18 +220,18 @@ export const routesSection: RouteObject[] = [
     ),
   },
 
-  // {
-  //   path: 'admin/order-status',
-  //   element: (
-  //     <AdminProtectedRoute>
-  //       <AdminLayout>
-  //         <Suspense fallback={renderFallback()}>
-  //           <AdminOrderStatusPage />
-  //         </Suspense>
-  //       </AdminLayout>
-  //     </AdminProtectedRoute>
-  //   ),
-  // },
+  {
+    path: 'admin/order-status',
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <Suspense fallback={renderFallback()}>
+            <AdminOrderStatusPage />
+          </Suspense>
+        </AdminLayout>
+      </AdminProtectedRoute>
+    ),
+  },
   
   // User routes
   {

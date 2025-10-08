@@ -1,6 +1,6 @@
 import { CONFIG } from 'src/config-global';
 
-import { AdminBrandView } from 'src/sections/admin-order-status';
+import { AdminOrderStatusView } from 'src/sections/admin-order-status';
 
 // ----------------------------------------------------------------------
 
@@ -9,7 +9,7 @@ export default function AdminOrderStatusPage() {
     <>
       <title>{`Order Status Management - ${CONFIG.appName}`}</title>
 
-      <AdminBrandView />
+      <AdminOrderStatusView />
     </>
   );
 }

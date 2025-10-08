@@ -13,23 +13,19 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
-import { alpha } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
 import DialogContentText from '@mui/material/DialogContentText';
-import Chip from '@mui/material/Chip';
-
+import DialogActions from '@mui/material/DialogActions';
+import { Scrollbar } from 'src/components/scrollbar/scrollbar';
 import { Iconify } from 'src/components/iconify';
-import { Scrollbar } from 'src/components/scrollbar';
 
-import type { OrderStatus } from 'src/utils/api-service';
+import { OrderStatus } from 'src/utils/api-service';
 import { apiService } from 'src/utils/api-service';
 
-// ----------------------------------------------------------------------
-
-interface OrderStatusesTableProps {
+// Define OrderStatus type here (based on typical usage)
+export interface OrderStatusTableProps {
   orderStatuses: OrderStatus[];
   totalCount: number;
   page: number;
@@ -38,11 +34,19 @@ interface OrderStatusesTableProps {
   onPageChange: (event: unknown, newPage: number) => void;
   onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onEdit: (orderStatus: OrderStatus) => void;
-  onDelete: (orderStatusId: number) => void;
+  onDelete: (id: number) => void;
   onAddOrderStatus: () => void;
 }
 
-export function OrderStatusesTable({
+
+
+export interface OrderStatus {
+  id: number;
+  name: string;
+  status: number;
+}
+
+export function OrderStatusTable({
   orderStatuses,
   totalCount,
   page,
@@ -53,7 +57,7 @@ export function OrderStatusesTable({
   onEdit,
   onDelete,
   onAddOrderStatus,
-}: OrderStatusesTableProps) {
+}: OrderStatusTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [orderStatusToDelete, setOrderStatusToDelete] = useState<OrderStatus | null>(null);
 
@@ -75,38 +79,36 @@ export function OrderStatusesTable({
     setOrderStatusToDelete(null);
   }, []);
 
-
   return (
     <Card>
       <Box sx={{ p: 3, pb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h6">Order Statuses Management</Typography>
-          <Button
+          {/* <Button
             variant="contained"
             startIcon={<Iconify icon="solar:pen-bold" />}
             onClick={onAddOrderStatus}
           >
             Add Order Status
-          </Button>
+          </Button> */}
         </Box>
       </Box>
-
       <Scrollbar>
         <TableContainer sx={{ minWidth: 800 }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>#</TableCell>
-                <TableCell>Full Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>	User Type</TableCell>
+                <TableCell>S.No</TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Status</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
+
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                  <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                     <Typography variant="body2" color="text.secondary">
                       Loading order statuses...
                     </Typography>
@@ -114,18 +116,18 @@ export function OrderStatusesTable({
                 </TableRow>
               ) : orderStatuses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                  <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                     <Typography variant="body2" color="text.secondary">
                       No order statuses found
                     </Typography>
                   </TableCell>
                 </TableRow>
-              ) : (
+              ): (
                 orderStatuses.map((orderStatus, index) => (
                   <TableRow key={orderStatus.id} hover>
                     <TableCell>
                       <Typography>
-                        {page * rowsPerPage + index + 1}
+                        {index + 1}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -134,15 +136,10 @@ export function OrderStatusesTable({
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography>
-                        {orderStatus.email}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {orderStatus.is_super ? 'Super Admin' : 'Staff'}
-                      </Typography>
-                    </TableCell>
+                    <Typography>
+                      {orderStatus.status === 1 ? 'Active' : orderStatus.status === 0 ? 'Disabled' : orderStatus.status}
+                    </Typography>
+                  </TableCell>
                     <TableCell align="right">
                       <IconButton
                         color="primary"
@@ -150,12 +147,6 @@ export function OrderStatusesTable({
                         sx={{ mr: 1 }}
                       >
                         <Iconify icon="solar:pen-bold" />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDeleteClick(orderStatus)}
-                      >
-                        <Iconify icon="solar:trash-bin-trash-bold" />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -165,7 +156,6 @@ export function OrderStatusesTable({
           </Table>
         </TableContainer>
       </Scrollbar>
-
       <TablePagination
         component="div"
         count={totalCount}
@@ -177,7 +167,6 @@ export function OrderStatusesTable({
         showFirstButton
         showLastButton
       />
-
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}

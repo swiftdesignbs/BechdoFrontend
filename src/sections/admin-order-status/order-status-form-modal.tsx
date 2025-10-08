@@ -35,9 +35,7 @@ interface OrderStatusFormModalProps {
 
 interface FormData {
   name: string;
-  email: string;
-  password: string;
-  is_super: number | null;
+  status: number;
 }
 
 const categories = [
@@ -47,9 +45,7 @@ const categories = [
 export function OrderStatusFormModal({ open, onClose, onSuccess, editingOrderStatus }: OrderStatusFormModalProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    email: '',
-    password: '',
-    is_super: null,
+    status: '',
   });
 
   const [saving, setSaving] = useState(false);
@@ -60,17 +56,13 @@ export function OrderStatusFormModal({ open, onClose, onSuccess, editingOrderSta
     if (editingOrderStatus && open) {
       setFormData({
         name: editingOrderStatus.name,
-        email: editingOrderStatus.email,
-        password: '', // Don't show password when editing
-        is_super: editingOrderStatus.is_super,
+        status: editingOrderStatus.status,
       });
     } else if (open) {
       // Reset form for create mode
       setFormData({
         name: '',
-        email: '',
-        password: '',
-        is_super: null,
+        status: '',
       });
     }
   }, [editingOrderStatus, open]);
@@ -89,33 +81,16 @@ export function OrderStatusFormModal({ open, onClose, onSuccess, editingOrderSta
       setError('Name is required');
       return;
     }
-    if (!formData.email.trim()) {
-      setError('Email is required');
-      return;
-    }
-    // Only require password when creating a new user
-    if (!editingOrderStatus && !formData.password.trim()) {
-      setError('Password is required');
-      return;
-    }
-    if (formData.is_super === null || formData.is_super === undefined) {
-      setError('User Type is required');
-      return;
-    }
     
     setSaving(true);
     setError(null);
 
     try {
-      if (editingorderStatus) {
         // Update existing order status
         const orderStatusData = {
-          id: editingorderStatus.id,
+          id: editingOrderStatus.id,
           name: formData.name.trim(),
-          email: formData.email.trim(),
-          // Only send password if it's changed
-          ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
-          is_super: formData.is_super,
+          status: formData.status,
         };
 
         const response = await apiService.updateOrderStatus(orderStatusData);
@@ -126,24 +101,6 @@ export function OrderStatusFormModal({ open, onClose, onSuccess, editingOrderSta
         } else {
           setError(response.error || 'Failed to update order status');
         }
-      } else {
-        // Create new order status
-        const orderStatusData: CreateOrderStatusRequest = {
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          password: formData.password.trim(),
-          is_super: formData.is_super,
-        };
-
-        const response = await apiService.createOrderStatus(orderStatusData);
-        
-        if (response.success) {
-          onSuccess();
-          handleClose();
-        } else {
-          setError(response.error || 'Failed to create order status');
-        }
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to ${editingOrderStatus ? 'update' : 'create'} order status`);
     } finally {
@@ -154,9 +111,7 @@ export function OrderStatusFormModal({ open, onClose, onSuccess, editingOrderSta
   const handleClose = () => {
     setFormData({
       name: '',
-      email: '',
-      password: '',
-      is_super: null,
+      status: '',
     });
     setError(null);
     onClose();
@@ -187,49 +142,20 @@ export function OrderStatusFormModal({ open, onClose, onSuccess, editingOrderSta
               />
             </Box>
             
-            <Box sx={{ flex: 1 }}>
-              <TextField
-                fullWidth
-                label="Email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="e.g., user@example.com"
-                required
-              />
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <Box sx={{ flex: 1 }}>
-              <TextField
-                fullWidth
-                label="Password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                required={!editingOrderStatus}
-                placeholder={editingOrderStatus ? "Leave blank to keep existing password" : ""}
-              />
-            </Box>
-            
-            <Box sx={{ flex: 1 }}>
-              <FormControl fullWidth required>
-                <InputLabel>User Type</InputLabel>
-                <Select
-                  value={formData.is_super}
-                  onChange={(e) => handleInputChange('is_super', e.target.value as number)}
-                  label="User Type"
-                >
-                  <MenuItem key="super_admin" value={1}>
-                    Super Admin
-                  </MenuItem>
-                  <MenuItem key="staff" value={0}>
-                    Staff
-                  </MenuItem>
-                </Select>
+            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', height: '100%' }}>
+              <FormControl>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography sx={{ mr: 2 }}>Active</Typography>
+                  <input
+                    type="checkbox"
+                    checked={formData.status === 1}
+                    onChange={e => handleInputChange('status', e.target.checked ? 1 : 0)}
+                  />
+                </Box>
               </FormControl>
             </Box>
           </Box>
+
         </Box>
       </DialogContent>
       <DialogActions>

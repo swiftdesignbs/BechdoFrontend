@@ -227,6 +227,35 @@ export interface VendorsListResponse {
   limit?: number;
 }
 
+export interface OrderStatus {
+  id: number;
+  name: string;
+  status: number;
+}
+
+export interface OrderStatusListResponse {
+  data: OrderStatus[];
+  pagination?: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+  };
+  // Legacy fields for backward compatibility
+  total?: number;
+  page?: number;
+  limit?: number;
+}
+
+export interface CreateOrderStatusRequest {
+  name: string;
+  status: number;
+}
+
+export interface UpdateOrderStatusRequest extends Partial<CreateOrderStatusRequest> {
+  id: number;
+}
+
 // ----------------------------------------------------------------------
 
 class ApiService {
@@ -693,6 +722,57 @@ class ApiService {
    */
   async deleteUser(id: number): Promise<ApiResponse<any>> {
     return this.request(`/api/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ----------------------------------------------------------------------
+  // ORDER STATUS MANAGEMENT APIs
+  // ----------------------------------------------------------------------
+
+  /**
+   * Get order statuses list with pagination
+   */
+  async getOrderStatuses(page: number = 1, limit: number = 10): Promise<ApiResponse<OrderStatusListResponse>> {
+    return this.request<OrderStatusListResponse>(`/api/order-status?page=${page}&limit=${limit}`, {
+      method: 'GET',
+    });
+  }
+
+  /**
+   * Get single order status by ID
+   */
+  async getOrderStatus(id: number): Promise<ApiResponse<OrderStatus>> {
+    return this.request<OrderStatus>(`/api/order-status/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  /**
+   * Create new order status
+   */
+  async createOrderStatus(orderStatusData: CreateOrderStatusRequest): Promise<ApiResponse<OrderStatus>> {
+    return this.request<OrderStatus>('/api/order-status/create', {
+      method: 'POST',
+      body: JSON.stringify(orderStatusData),
+    });
+  }
+
+  /**
+   * Update order status
+   */
+  async updateOrderStatus(orderStatusData: UpdateOrderStatusRequest): Promise<ApiResponse<OrderStatus>> {
+    return this.request<OrderStatus>(`/api/order-status/${orderStatusData.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(orderStatusData),
+    });
+  }
+
+  /**
+   * Delete order status
+   */
+  async deleteOrderStatus(id: number): Promise<ApiResponse<any>> {
+    return this.request(`/api/order-status/${id}`, {
       method: 'DELETE',
     });
   }

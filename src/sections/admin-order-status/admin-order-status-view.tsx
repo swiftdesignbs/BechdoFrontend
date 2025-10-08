@@ -13,11 +13,11 @@ import Snackbar from '@mui/material/Snackbar';
 import { useRouter } from 'src/routes/hooks';
 
 import { Iconify } from 'src/components/iconify';
-import { OrderStatusesTable } from './order-status-table';
+import { OrderStatusTable } from './order-status-table';
 import { OrderStatusFormModal } from './order-status-form-modal';
 
 import { apiService } from 'src/utils/api-service';
-import type { OrderStatus, CreateOrderStatusRequest, OrderStatusesListResponse } from 'src/utils/api-service';
+import type { OrderStatus, CreateOrderStatusRequest, OrderStatusListResponse } from 'src/utils/api-service';
 
 // ----------------------------------------------------------------------
 
@@ -48,7 +48,7 @@ export function AdminOrderStatusView() {
     try {
       const response = await apiService.getOrderStatuses(page + 1, rowsPerPage);
       if (response.success && response.data) {
-        setOrderStatuses(response.data.orderStatuses || []);
+        setOrderStatuses(response.data.data || []);
         
         // Handle both new pagination structure and legacy structure
         let totalItems = 0;
@@ -192,7 +192,7 @@ export function AdminOrderStatusView() {
         </Box> */}
 
         {/* Order Status Table */}
-        <OrderStatusesTable
+        <OrderStatusTable
           orderStatuses={orderStatuses}
           totalCount={totalCount}
           page={page}
