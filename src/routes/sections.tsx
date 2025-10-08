@@ -24,6 +24,7 @@ export const Page404 = lazy(() => import('src/pages/page-not-found'));
 
 // New pages
 export const AdminPartnerOrdersPage = lazy(() => import('src/pages/admin-partner-orders'));
+export const AdminCustomerOrdersPage = lazy(() => import('src/pages/admin-customer-orders'));
 export const HomePage = lazy(() => import('src/pages/home'));
 export const AdminSignInPage = lazy(() => import('src/pages/admin-sign-in'));
 export const UserSignInPage = lazy(() => import('src/pages/user-sign-in'));
@@ -196,6 +197,18 @@ export const routesSection: RouteObject[] = [
     ),
   },
   {
+    path: 'admin/customer-orders',
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <Suspense fallback={renderFallback()}>
+            <AdminCustomerOrdersPage />
+          </Suspense>
+        </AdminLayout>
+      </AdminProtectedRoute>
+    ),
+  },
+  {
     path: 'admin/partner-orders',
     element: (
       <AdminProtectedRoute>
@@ -232,6 +245,7 @@ export const routesSection: RouteObject[] = [
       </AdminProtectedRoute>
     ),
   },
+
   
   // User routes
   {

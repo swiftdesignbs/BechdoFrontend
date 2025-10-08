@@ -9,8 +9,8 @@ import TablePagination from '@mui/material/TablePagination';
 import { useTheme } from '@mui/material/styles';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
-import { PartnerOrdersTable } from './partner-orders-table';
-import { PartnerOrdersFilter } from './partner-orders-filter';
+import { CustomerOrdersTable } from './customer-orders-table';
+import { CustomerOrdersFilter } from './customer-orders-filter';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -18,8 +18,17 @@ import DialogActions from '@mui/material/DialogActions';
 import { useMemo } from 'react';
 import { apiService } from 'src/utils/api-service';
 
+// Dummy data for brands, cities, stores (replace with API calls as needed)
+const DUMMY_BRANDS = [
+  { id: 4, brand_name: 'HP' },
+  { id: 5, brand_name: 'Dell' },
+];
+const DUMMY_CITIES = [
+  { id: 604, name: 'Hyderabad' },
+  { id: 605, name: 'Mumbai' },
+];
 
-export function AdminPartnerOrdersView() {
+export function AdminCustomerOrdersView() {
   // ...existing code...
 
   // Handler for updating order data using apiService
@@ -53,18 +62,17 @@ export function AdminPartnerOrdersView() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState<{ search: string; brand_id: string; orderStatus: string; city: string; store_id: string; from: Date | null; to: Date | null }>({ search: '', brand_id: '', orderStatus: '', city: '', store_id: '', from: null, to: null });
+  const [filters, setFilters] = useState<{ search: string; brand_id: string; orderStatus: string; city: string;  from: Date | null; to: Date | null }>({ search: '', brand_id: '', orderStatus: '', city: '', from: null, to: null });
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success',
   });
-
   const [order_status, setOrderStatuses] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
-
+  
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
@@ -75,12 +83,11 @@ export function AdminPartnerOrdersView() {
         brand_id: filters.brand_id || '',
         order_status: filters.orderStatus || '',
         city: filters.city || '',
-        store_id: filters.store_id || '',
         daterange: filters.from && filters.to ? `${(filters.from as Date).toISOString()}_${(filters.to as Date).toISOString()}` : '',
       });
-      const result = await apiService.getPartnerOrders(Object.fromEntries(params.entries()));
+      const result = await apiService.getCustomerOrders(Object.fromEntries(params.entries()));
       if (result.success) {
-        setOrders(result.data.data || []);
+        setOrders(result.data.orders || []);
         setTotalCount(result.data.pagination.totalItems || 0);
         if (result.data.order_statuses) {
           setOrderStatuses(result.data.order_statuses);
@@ -111,18 +118,17 @@ export function AdminPartnerOrdersView() {
   return (
     <Container maxWidth={false}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-        <Typography variant="h4">Partner Orders</Typography>
+        <Typography variant="h4">Customer Orders</Typography>
       </Stack>
-      <PartnerOrdersFilter
+      <CustomerOrdersFilter
         filters={filters}
         onChange={setFilters}
         brands={brands}
         cities={cities}
         order_status={order_status}
-        stores={stores}
       />
       <Card>
-        <PartnerOrdersTable
+        <CustomerOrdersTable
           orders={orders}
           totalCount={totalCount}
           page={page}
@@ -221,11 +227,11 @@ export function AdminPartnerOrdersView() {
                   <tr>
                     <td style={{ border: '1px solid #bdbdbd', padding: '8px', verticalAlign: 'top' }}>Order Status</td>
                     <td style={{ border: '1px solid #bdbdbd', padding: '8px', verticalAlign: 'top' }}>
-                        <select name="order_status" defaultValue={viewOrder.order_status} style={{ width: '100%' }}>
+                      <select name="order_status" defaultValue={viewOrder.order_status} style={{ width: '100%' }}>
                           {order_status.map((status: any) => (
                             <option key={status.id} value={status.id}>{status.name}</option>
                           ))}
-                        </select>
+                      </select>
                     </td>
                   </tr>
                   <tr>

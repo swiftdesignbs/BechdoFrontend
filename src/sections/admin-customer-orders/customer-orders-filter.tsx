@@ -9,15 +9,14 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
-export interface PartnerOrdersFilterProps {
+export interface CustomerOrdersFilterProps {
   filters: any;
   onChange: (filters: any) => void;
   brands: { id: number; brand_name: string }[];
   cities: { id: number; name: string }[];
-  stores: { id: number; name: string }[];
   order_status: { id: number; name: string }[];
 }
-export function PartnerOrdersFilter({ filters, onChange, brands, cities, stores, order_status }: PartnerOrdersFilterProps) {
+export function CustomerOrdersFilter({ filters, onChange, brands, cities, order_status }: CustomerOrdersFilterProps) {
   const [localFilters, setLocalFilters] = useState(filters);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -94,24 +93,7 @@ export function PartnerOrdersFilter({ filters, onChange, brands, cities, stores,
                   </TextField>
                 </Grid>
 
-                {/* Row 2: Store, Order Status, Date Range */}
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    select
-                    label="Store"
-                    value={localFilters.store_id || ''}
-                    onChange={e => handleChange('store_id', e.target.value)}
-                    size="small"
-                    variant="outlined"
-                    fullWidth
-                    sx={{ minWidth: 180 }}
-                  >
-                    <MenuItem value="">All</MenuItem>
-                    {stores.map(s => (
-                      <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
+                {/* Row 2: Order Status, Date Range */}
                 <Grid item xs={12} md={4}>
                   <TextField
                     select

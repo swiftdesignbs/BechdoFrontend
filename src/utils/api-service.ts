@@ -1,6 +1,3 @@
-  /**
-   * Get channel partner orders with filters
-   */
 import { CONFIG } from '../config-global';
 
 // ----------------------------------------------------------------------
@@ -659,6 +656,17 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  /**
+   * Get customer orders with filters
+   */
+  async getCustomerOrders(params: Record<string, string>): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/api/orders/customer-reports?${query}`, {
+      method: 'GET',
+    });
+  }
+
 
   /**
    * Get channel partner orders with filters
