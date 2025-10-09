@@ -667,6 +667,16 @@ class ApiService {
     });
   }
 
+  /**
+   * Get city orders with filters
+   */
+  async getCityOrders(params: Record<string, string>): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/api/orders/city-wise-reports?${query}`, {
+      method: 'GET',
+    });
+  }
+
 
   /**
    * Get channel partner orders with filters
