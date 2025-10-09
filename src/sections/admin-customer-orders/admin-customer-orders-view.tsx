@@ -18,15 +18,6 @@ import DialogActions from '@mui/material/DialogActions';
 import { useMemo } from 'react';
 import { apiService } from 'src/utils/api-service';
 
-// Dummy data for brands, cities, stores (replace with API calls as needed)
-const DUMMY_BRANDS = [
-  { id: 4, brand_name: 'HP' },
-  { id: 5, brand_name: 'Dell' },
-];
-const DUMMY_CITIES = [
-  { id: 604, name: 'Hyderabad' },
-  { id: 605, name: 'Mumbai' },
-];
 
 export function AdminCustomerOrdersView() {
   // ...existing code...

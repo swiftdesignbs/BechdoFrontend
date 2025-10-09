@@ -26,6 +26,7 @@ export const Page404 = lazy(() => import('src/pages/page-not-found'));
 export const AdminPartnerOrdersPage = lazy(() => import('src/pages/admin-partner-orders'));
 export const AdminCustomerOrdersPage = lazy(() => import('src/pages/admin-customer-orders'));
 export const AdminCityOrdersPage = lazy(() => import('src/pages/admin-city-orders'));
+export const AdminChannelPartnersPage = lazy(() => import('src/pages/admin-channel-partners'));
 export const HomePage = lazy(() => import('src/pages/home'));
 export const AdminSignInPage = lazy(() => import('src/pages/admin-sign-in'));
 export const UserSignInPage = lazy(() => import('src/pages/user-sign-in'));
@@ -254,6 +255,19 @@ export const routesSection: RouteObject[] = [
         <AdminLayout>
           <Suspense fallback={renderFallback()}>
             <AdminCityOrdersPage />
+          </Suspense>
+        </AdminLayout>
+      </AdminProtectedRoute>
+    ),
+  },
+
+  {
+    path: 'admin/channel-partners',
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <Suspense fallback={renderFallback()}>
+            <AdminChannelPartnersPage />
           </Suspense>
         </AdminLayout>
       </AdminProtectedRoute>

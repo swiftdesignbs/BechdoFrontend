@@ -264,6 +264,56 @@ class ApiService {
     this.baseUrl = CONFIG.apiBaseUrl;
   }
 
+    // ----------------------------------------------------------------------
+    // CHANNEL PARTNER MANAGEMENT APIs
+    // ----------------------------------------------------------------------
+
+    /**
+     * Get channel partners list with pagination
+     */
+    async getChannelPartners(page: number = 1, limit: number = 10): Promise<ApiResponse<any>> {
+      return this.request<any>(`/api/channel-partner?page=${page}&limit=${limit}`, {
+        method: 'GET',
+      });
+    }
+
+    /**
+     * Create new channel partner
+     */
+    async createChannelPartner(data: Record<string, any>): Promise<ApiResponse<any>> {
+      return this.request<any>('/api/channel-partner/create', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    }
+
+    /**
+     * Get single channel partner by ID
+     */
+    async getChannelPartner(id: number): Promise<ApiResponse<any>> {
+      return this.request<any>(`/api/channel-partner/${id}`, {
+        method: 'GET',
+      });
+    }
+
+    /**
+     * Update channel partner by ID
+     */
+    async updateChannelPartner(id: number, data: Record<string, any>): Promise<ApiResponse<any>> {
+      return this.request<any>(`/api/channel-partner/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    }
+
+    /**
+     * Delete channel partner by ID
+     */
+    async deleteChannelPartner(id: number): Promise<ApiResponse<any>> {
+      return this.request(`/api/channel-partner/${id}`, {
+        method: 'DELETE',
+      });
+    }
   /**
    * Handle logout and redirect to login page
    */
