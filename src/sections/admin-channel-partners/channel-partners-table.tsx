@@ -187,7 +187,7 @@ export function ChannelPartnersTable({
         aria-describedby="delete-dialog-description"
       >
         <DialogTitle id="delete-dialog-title">
-          Delete Brand
+          Delete Channel Partner
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-dialog-description">

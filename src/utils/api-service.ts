@@ -256,6 +256,48 @@ export interface UpdateOrderStatusRequest extends Partial<CreateOrderStatusReque
 // ----------------------------------------------------------------------
 
 class ApiService {
+
+    /**
+     * Create new customer
+     */
+    async createCustomer(data: Record<string, any>): Promise<ApiResponse<any>> {
+      return this.request<any>('/api/customer/create', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    }
+
+    /**
+     * Update customer by ID
+     */
+    async updateCustomer(id: number, data: Record<string, any>): Promise<ApiResponse<any>> {
+      return this.request<any>(`/api/customer/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    }
+
+    /**
+     * Delete customer by ID
+     */
+    async deleteCustomer(id: number): Promise<ApiResponse<any>> {
+      return this.request<any>(`/api/customer/${id}`, {
+        method: 'DELETE',
+      });
+    }
+    /**
+     * Get customers by channel partner
+     */
+    async getPartnerCustomers(params: { channel_partner_id: number; page?: number; limit?: number }): Promise<ApiResponse<any>> {
+      const query = new URLSearchParams({
+        channel_partner_id: String(params.channel_partner_id),
+        page: String(params.page ?? 1),
+        limit: String(params.limit ?? 10),
+      }).toString();
+      return this.request<any>(`/api/customer/by-channel-partner?${query}`, {
+        method: 'GET',
+      });
+    }
  
   private baseUrl: string;
 
@@ -279,12 +321,43 @@ class ApiService {
 
     /**
      * Create new channel partner
+     * Supports FormData for file upload, or JSON for plain objects
      */
-    async createChannelPartner(data: Record<string, any>): Promise<ApiResponse<any>> {
-      return this.request<any>('/api/channel-partner/create', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+    async createChannelPartner(data: Record<string, any> | FormData): Promise<ApiResponse<any>> {
+      if (data instanceof FormData) {
+        // Get token from localStorage if available
+        const token = localStorage.getItem('authToken');
+        const url = import.meta.env.DEV ? '/api/channel-partner/create' : `${this.baseUrl}/api/channel-partner/create`;
+        const requestOptions: RequestInit = {
+          method: 'POST',
+          headers: {
+            // Do NOT set Content-Type for FormData
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: data,
+          mode: 'cors',
+          credentials: 'omit',
+        };
+        const response = await fetch(url, requestOptions);
+        const contentType = response.headers.get('content-type');
+        let respData;
+        if (contentType && contentType.includes('application/json')) {
+          respData = await response.json();
+        } else {
+          const text = await response.text();
+          respData = text ? { message: text } : {};
+        }
+        if (!response.ok) {
+          return { success: false, error: respData?.message || respData?.error || `HTTP Error: ${response.status}` };
+        }
+        return { success: true, data: respData };
+      } else {
+        // Otherwise, send as JSON
+        return this.request<any>('/api/channel-partner/create', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        });
+      }
     }
 
     /**
@@ -310,7 +383,7 @@ class ApiService {
      * Delete channel partner by ID
      */
     async deleteChannelPartner(id: number): Promise<ApiResponse<any>> {
-      return this.request(`/api/channel-partner/${id}`, {
+      return this.request<any>(`/api/channel-partner/${id}`, {
         method: 'DELETE',
       });
     }
