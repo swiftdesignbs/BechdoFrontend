@@ -116,6 +116,103 @@ export interface UpdateBrandRequest extends Partial<CreateBrandRequest> {
   id: number;
 }
 
+// ----------------------------------------------------------------------
+// SETTINGS MANAGEMENT APIs
+// ----------------------------------------------------------------------
+
+export interface Setting {
+  id: number;
+  name: string;
+  value: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SettingsListResponse {
+  data: Setting[];
+  pagination?: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+  };
+}
+
+export interface CreateSettingRequest {
+  name: string;
+  value: string;
+}
+
+export interface UpdateSettingRequest extends Partial<CreateSettingRequest> {
+  id: number;
+}
+
+export interface SaveOrderRequest {
+  config_type: string;
+  item_ids: string[];
+  is_mac?: number;
+}
+
+export interface SystemConfigCategory {
+  id: number;
+  active: boolean;
+  price?: number;
+  extra_price?: number;
+}
+
+export interface ConfigItemDetail {
+  id: number;
+  config_id: number;
+  config_type_id: number;
+  parent_id: number;
+  parent_type_id: number;
+  price: number;
+  extra_price: number;
+  active: boolean;
+}
+
+export interface ConfigItem {
+  id: number;
+  config_type_id: number;
+  is_mac: boolean;
+  title: string;
+  extra_price_title: string | null;
+  show_extra_price: number;
+  description: string | null;
+  order: number;
+  image_id: number | null;
+}
+
+export interface SystemConfigEditResponse {
+  config_item_details?: ConfigItemDetail[];
+  config_item?: ConfigItem;
+  result?: {
+    config_item_details: ConfigItemDetail[];
+    config_item: ConfigItem;
+  };
+}
+
+export interface SystemConfigRequest {
+  title: string;
+  categories: SystemConfigCategory[];
+  is_mac: boolean;
+  is_parent: number;
+  config_type: string;
+  default_config_price: number;
+  edit_mode: boolean;
+  edit_id?: number;
+  image_id?: number | null;
+}
+
+export interface SystemConfigResponse {
+  id: number;
+  title: string;
+  config_type: string;
+  default_config_price: number;
+  is_mac: boolean;
+  categories: SystemConfigCategory[];
+}
+
 export interface Model {
   id: number;
   brand_id: number;
@@ -251,6 +348,70 @@ export interface CreateOrderStatusRequest {
 
 export interface UpdateOrderStatusRequest extends Partial<CreateOrderStatusRequest> {
   id: number;
+}
+
+// ----------------------------------------------------------------------
+// SYSTEM SETTINGS INTERFACES
+// ----------------------------------------------------------------------
+
+export interface SwitchCondition {
+  id: number;
+  swtich_condition: string;
+  swtich_price: number;
+}
+
+export interface ParentCategory {
+  id: number;
+  parent_type_id: number;
+  title: string;
+  price: number;
+  order: number;
+  is_mac: boolean;
+  bonus: number;
+  bonus_applicable: boolean;
+}
+
+export interface ConfigDataItem {
+  id: number;
+  config_type_id: number;
+  is_mac: boolean;
+  title: string;
+  extra_price_title?: string | null;
+  show_extra_price: number;
+  description?: string | null;
+  order: number;
+  image_id?: number | null;
+  image?: {
+    id: number;
+    image_name: string;
+    image_path: string;
+  } | null;
+}
+
+export interface ConfigSection {
+  type: string;
+  title: string;
+  data: ConfigDataItem[];
+  show_description?: boolean;
+  show_image?: boolean;
+}
+
+export interface WindowsSettingsData {
+  switch: SwitchCondition[];
+  parentCategories: ParentCategory[];
+  series_mac: ParentCategory[];
+  isMac: boolean;
+  parentCategoryTypeName: string;
+  parentCategoryType: string;
+  configData: ConfigSection[];
+  image: Array<{
+    id: number;
+    image_name: string;
+    image_path: string;
+  }>;
+  parentTypeId: number;
+  deductionPercent: string;
+  bonus_applicable: boolean;
 }
 
 // ----------------------------------------------------------------------
@@ -918,6 +1079,118 @@ class ApiService {
     });
   }
 
+  // ----------------------------------------------------------------------
+  // SETTINGS MANAGEMENT APIs
+  // ----------------------------------------------------------------------
+
+  /**
+   * Get settings list with pagination
+   */
+  async getSettings(page: number = 1, limit: number = 10): Promise<ApiResponse<SettingsListResponse>> {
+    return this.request<SettingsListResponse>(`/api/settings?page=${page}&limit=${limit}`, {
+      method: 'GET',
+    });
+  }
+
+  /**
+   * Get single setting by ID
+   */
+  async getSetting(id: number): Promise<ApiResponse<Setting>> {
+    return this.request<Setting>(`/api/settings/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  /**
+   * Create new setting
+   */
+  async createSetting(settingData: CreateSettingRequest): Promise<ApiResponse<Setting>> {
+    return this.request<Setting>('/api/settings/create', {
+      method: 'POST',
+      body: JSON.stringify(settingData),
+    });
+  }
+
+  /**
+   * Update setting
+   */
+  async updateSetting(id: number, settingData: UpdateSettingRequest): Promise<ApiResponse<Setting>> {
+    return this.request<Setting>(`/api/settings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(settingData),
+    });
+  }
+
+  /**
+   * Delete setting
+   */
+  async deleteSetting(id: number): Promise<ApiResponse<any>> {
+    return this.request(`/api/settings/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ----------------------------------------------------------------------
+  // SYSTEM SETTINGS APIs
+  // ----------------------------------------------------------------------
+
+  /**
+   * Get Windows settings
+   */
+  async getWindowsSettings(): Promise<ApiResponse<WindowsSettingsData>> {
+    return this.request<WindowsSettingsData>('/api/system/setting_windows', {
+      method: 'GET',
+    });
+  }
+
+  /**
+   * Get Mac settings
+   */
+  async getWindowsSettingsMac(): Promise<ApiResponse<WindowsSettingsData>> {
+    return this.request<WindowsSettingsData>('/api/system/setting_mac', {
+      method: 'GET',
+    });
+  }
+
+  /**
+   * Save order indexes for configuration items
+   */
+  async saveOrderIndexes(orderData: SaveOrderRequest): Promise<ApiResponse<any>> {
+    return this.request<any>('/api/system/save-order-indexes', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
+  }
+
+  /**
+   * Create system configuration
+   */
+  async createSystemConfig(configData: SystemConfigRequest): Promise<ApiResponse<SystemConfigResponse>> {
+    return this.request<SystemConfigResponse>('/api/system/system-config', {
+      method: 'POST',
+      body: JSON.stringify(configData),
+    });
+  }
+
+  /**
+   * Get system configuration by ID (for editing)
+   */
+  async getSystemConfig(id: number, parentTypeId?: number): Promise<ApiResponse<SystemConfigEditResponse>> {
+    const params = parentTypeId ? `?parent_type_id=${parentTypeId}` : '';
+    return this.request<SystemConfigEditResponse>(`/api/system/system-config/${id}${params}`, {
+      method: 'GET',
+    });
+  }
+
+  /**
+   * Update system configuration
+   */
+  async updateSystemConfig(configData: SystemConfigRequest): Promise<ApiResponse<SystemConfigResponse>> {
+    return this.request<SystemConfigResponse>('/api/system/system-config', {
+      method: 'POST',
+      body: JSON.stringify(configData),
+    });
+  }
 
 }
 

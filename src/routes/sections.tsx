@@ -42,6 +42,9 @@ export const UserDashboardPage = lazy(() => import('src/pages/user-dashboard'));
 export const UnauthorizedPage = lazy(() => import('src/pages/unauthorized'));
 export const AdminOrderStatusPage = lazy(() => import('src/pages/admin-order-status'));
 
+export const AdminSettingsPage = lazy(() => import('src/pages/admin-settings'));
+export const AdminSettingsMacPage = lazy(() => import('src/pages/admin-settings-mac'));
+
 const renderFallback = () => (
   <Box
     sx={{
@@ -63,6 +66,7 @@ const renderFallback = () => (
 );
 
 export const routesSection: RouteObject[] = [
+  
   // Home page (public)
   {
     path: '/',
@@ -268,6 +272,32 @@ export const routesSection: RouteObject[] = [
         <AdminLayout>
           <Suspense fallback={renderFallback()}>
             <AdminChannelPartnersPage />
+          </Suspense>
+        </AdminLayout>
+      </AdminProtectedRoute>
+    ),
+  },
+
+  {
+    path: 'admin/settings',
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <Suspense fallback={renderFallback()}>
+            <AdminSettingsPage />
+          </Suspense>
+        </AdminLayout>
+      </AdminProtectedRoute>
+    ),
+  },
+
+  {
+    path: 'admin/settings-mac',
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <Suspense fallback={renderFallback()}>
+            <AdminSettingsMacPage />
           </Suspense>
         </AdminLayout>
       </AdminProtectedRoute>
