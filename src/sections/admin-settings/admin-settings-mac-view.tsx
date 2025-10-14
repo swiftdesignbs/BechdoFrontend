@@ -27,6 +27,7 @@ import { Iconify } from 'src/components/iconify';
 import { CONFIG } from 'src/config-global';
 
 import { ConfigMacModal } from './config-mac-modal';
+import { ProcessorModal } from './processor-modal';
 
 import { apiService } from 'src/utils/api-service';
 import type { WindowsSettingsData, ConfigSection, ConfigDataItem, Setting, SaveOrderRequest } from 'src/utils/api-service';
@@ -48,6 +49,21 @@ export function AdminSettingsMacView() {
   const [currentConfig, setCurrentConfig] = useState<ConfigSection | null>(null);
   const [editingItem, setEditingItem] = useState<ConfigDataItem | null>(null);
 
+  // Mac Processor modal state
+  const [processorModalOpen, setProcessorModalOpen] = useState(false);
+  const [editingProcessor, setEditingProcessor] = useState<{
+    id: number;
+    title: string;
+    price: number;
+    bonus: number;
+  } | null>(null);
+
+  // Bonus Applicable state
+  const [bonusApplicable, setBonusApplicable] = useState(true);
+
+  // Mac Processors visibility state
+  const [showProcessorsTable, setShowProcessorsTable] = useState(false);
+
   // Snackbar state
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -61,7 +77,7 @@ export function AdminSettingsMacView() {
       const response = await apiService.getSettings(1, 100); // Get all settings
       if (response.success && response.data) {
         const deductionSetting = response.data.data.find(
-          (setting) => setting.name === 'laptop_not_working_deduction_percent'
+          (setting) => setting.name === 'mac_not_woking_deduction_percent'
         );
         if (deductionSetting) {
           setDeductionSetting(deductionSetting);
@@ -103,6 +119,13 @@ export function AdminSettingsMacView() {
     fetchMacSettings();
     fetchDeductionSetting();
   }, [fetchMacSettings, fetchDeductionSetting]);
+
+  // Initialize bonus applicable from API data
+  useEffect(() => {
+    if (data?.bonus_applicable !== undefined) {
+      setBonusApplicable(data.bonus_applicable);
+    }
+  }, [data]);
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -185,6 +208,149 @@ export function AdminSettingsMacView() {
     });
   };
 
+  // Mac Processor specific order management functions
+  const hasProcessorOrderChanges = (): boolean => {
+    return orderChanges['processors'] && Object.keys(orderChanges['processors']).length > 0;
+  };
+
+  const updateProcessorOrder = (processorId: number, newOrder: number) => {
+    setOrderChanges((prev) => ({
+      ...prev,
+      processors: {
+        ...prev['processors'],
+        [processorId]: newOrder,
+      },
+    }));
+  };
+
+  const getProcessorOrder = (processorId: number, defaultOrder: number): number => {
+    return orderChanges['processors']?.[processorId] ?? defaultOrder;
+  };
+
+  const moveProcessorUp = (processor: any, index: number) => {
+    if (index > 0 && data?.parentCategories) {
+      const prevProcessor = data.parentCategories[index - 1];
+      const currentOrder = getProcessorOrder(processor.id, processor.order);
+      const prevOrder = getProcessorOrder(prevProcessor.id, prevProcessor.order);
+      
+      updateProcessorOrder(processor.id, prevOrder);
+      updateProcessorOrder(prevProcessor.id, currentOrder);
+    }
+  };
+
+  const moveProcessorDown = (processor: any, index: number) => {
+    if (data?.parentCategories && index < data.parentCategories.length - 1) {
+      const nextProcessor = data.parentCategories[index + 1];
+      const currentOrder = getProcessorOrder(processor.id, processor.order);
+      const nextOrder = getProcessorOrder(nextProcessor.id, nextProcessor.order);
+      
+      updateProcessorOrder(processor.id, nextOrder);
+      updateProcessorOrder(nextProcessor.id, currentOrder);
+    }
+  };
+
+  const handleSaveProcessorOrder = async () => {
+    if (!data?.parentCategories) return;
+    
+    setSavingOrder('processors');
+    try {
+      // Get current order changes or use default order
+      const itemIds = data.parentCategories.map((processor) => {
+        const currentOrder = getProcessorOrder(processor.id, processor.order);
+        return `${processor.id}_${currentOrder}`;
+      });
+      
+      const orderData = {
+        config_type: 'MAC_SERIES',
+        item_ids: itemIds,
+        is_mac: 1,
+        is_parent: 1,
+      };
+
+      const response = await apiService.saveSystemConfigOrder(orderData);
+      
+      if (response.success) {
+        setSnackbar({
+          open: true,
+          message: 'Mac Processor order saved successfully',
+          severity: 'success',
+        });
+        
+        // Clear order changes for processors
+        setOrderChanges((prev) => {
+          const updated = { ...prev };
+          delete updated['processors'];
+          return updated;
+        });
+        
+        // Refresh the data to get updated order
+        await fetchMacSettings();
+      } else {
+        throw new Error(response.error || 'Failed to save processor order');
+      }
+    } catch (error) {
+      console.error('Error saving processor order:', error);
+      setSnackbar({
+        open: true,
+        message: error instanceof Error ? error.message : 'Failed to save processor order',
+        severity: 'error',
+      });
+    } finally {
+      setSavingOrder(null);
+    }
+  };
+
+  // Mac Processors specific handlers
+  const handleAddNewProcessor = () => {
+    setEditingProcessor(null);
+    setProcessorModalOpen(true);
+  };
+
+  const handleEditProcessor = (processor: any) => {
+    setEditingProcessor({
+      id: processor.id || 0,
+      title: processor.title || '',
+      price: processor.price || 0,
+      bonus: processor.bonus || 0,
+    });
+    setProcessorModalOpen(true);
+  };
+
+  const handleProcessorModalClose = () => {
+    setProcessorModalOpen(false);
+    setEditingProcessor(null);
+  };
+
+  const handleProcessorModalSuccess = () => {
+    // Refresh the data after successful create/update
+    fetchMacSettings();
+    setSnackbar({
+      open: true,
+      message: `Mac Processor ${editingProcessor ? 'updated' : 'created'} successfully`,
+      severity: 'success',
+    });
+  };
+
+  const handleDeleteProcessor = async (processorId: number, processorTitle: string) => {
+    if (window.confirm(`Are you sure you want to delete "${processorTitle}"?`)) {
+      try {
+        // TODO: Implement delete API call when endpoint is available
+        // const response = await apiService.deleteSystemConfig(processorId);
+        setSnackbar({
+          open: true,
+          message: 'Delete functionality requires backend API endpoint implementation',
+          severity: 'warning',
+        });
+      } catch (error) {
+        setSnackbar({
+          open: true,
+          message: 'Failed to delete processor',
+          severity: 'error',
+        });
+      }
+    }
+  };
+
   const handleSaveChanges = async () => {
     setSavingDeduction(true);
     try {
@@ -192,7 +358,7 @@ export function AdminSettingsMacView() {
         // Update existing setting
         const response = await apiService.updateSetting(deductionSetting.id, {
           id: deductionSetting.id,
-          name: 'laptop_not_working_deduction_percent',
+          name: 'mac_not_woking_deduction_percent',
           value: deductionPercent,
         });
         
@@ -210,7 +376,7 @@ export function AdminSettingsMacView() {
       } else {
         // Create new setting
         const response = await apiService.createSetting({
-          name: 'laptop_not_working_deduction_percent',
+          name: 'mac_not_woking_deduction_percent',
           value: deductionPercent,
         });
         
@@ -759,43 +925,438 @@ export function AdminSettingsMacView() {
 
         {/* Add / Edit Mac Processors */}
         <Box sx={{ flex: 1 }}>
-          <Card 
-            sx={{ 
-              p: 3,
-              borderRadius: 3,
-              border: '2px dashed',
-              borderColor: 'primary.main',
-              bgcolor: 'primary.lighter',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                borderColor: 'primary.dark',
-                bgcolor: 'primary.light',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 8px 25px rgba(33, 150, 243, 0.3)'
-              }
-            }}
-          >
-            <Stack 
-              direction="row" 
-              alignItems="center" 
-              justifyContent="center"
-              spacing={2}
-              sx={{ minHeight: 120 }}
+          {data?.parentCategories && (
+            <Card 
+              sx={{ 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                  transform: 'translateY(-2px)',
+                }
+              }}
             >
-              <Avatar sx={{ bgcolor: 'primary.main', width: 50, height: 50 }}>
-                🍎
-              </Avatar>
-              <Box>
-                <Typography variant="h6" color="primary.dark" sx={{ fontWeight: 600 }}>
-                  Add / Edit Mac Processors
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Configure processor categories and pricing
-                </Typography>
+              <Box sx={{ p: 3 }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
+                  <Box 
+                    onClick={() => setShowProcessorsTable(!showProcessorsTable)}
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 2,
+                      cursor: 'pointer',
+                      p: 1,
+                      borderRadius: 2,
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: 'grey.50',
+                        '& .MuiTypography-root': {
+                          color: 'primary.main'
+                        },
+                        '& .arrow-icon': {
+                          color: 'primary.main',
+                          transform: showProcessorsTable ? 'rotate(180deg) scale(1.1)' : 'rotate(0deg) scale(1.1)'
+                        }
+                      }
+                    }}
+                  >
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: 'primary.main', 
+                        width: 40, 
+                        height: 40,
+                        fontSize: '1rem',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      🍎
+                    </Avatar>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        color: 'text.primary', 
+                        fontWeight: 600,
+                        fontSize: '1.25rem',
+                        transition: 'color 0.2s ease',
+                        flex: 1
+                      }}
+                    >
+                      Mac Processors
+                    </Typography>
+                    <Box 
+                      className="arrow-icon"
+                      sx={{ 
+                        color: 'text.secondary',
+                        transition: 'all 0.3s ease',
+                        transform: showProcessorsTable ? 'rotate(180deg)' : 'rotate(0deg)',
+                        fontSize: '1.4rem',
+                        lineHeight: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        backgroundColor: showProcessorsTable ? 'primary.lighter' : 'transparent',
+                        border: `1px solid ${showProcessorsTable ? 'primary.main' : 'transparent'}`,
+                      }}
+                    >
+                      ▼
+                    </Box>
+                  </Box>
+                  
+                  {!showProcessorsTable && (
+                    <Button 
+                      variant="contained" 
+                      size="small"
+                      onClick={handleAddNewProcessor}
+                      sx={{ 
+                        borderRadius: 3,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 2,
+                        py: 0.5,
+                        fontSize: '0.75rem',
+                        boxShadow: '0 2px 8px rgba(33, 150, 243, 0.3)',
+                        minWidth: 'auto'
+                      }}
+                    >
+                      Add New +
+                    </Button>
+                  )}
+                </Stack>
+                  
+                {showProcessorsTable && (
+                  <>
+                    <Stack direction="row" alignItems="center" spacing={2} mb={2}>
+                      <Button 
+                        variant="contained" 
+                        size="medium"
+                        onClick={handleAddNewProcessor}
+                        sx={{ 
+                          borderRadius: 3,
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          px: 3,
+                          py: 1,
+                          fontSize: '0.875rem',
+                          boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)'
+                        }}
+                      >
+                        Add New +
+                      </Button>
+                    
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 2,
+                      px: 2,
+                      py: 1,
+                      borderRadius: 2,
+                      bgcolor: 'grey.50'
+                    }}>
+                      <Typography 
+                        variant="body1" 
+                        sx={{ 
+                          fontWeight: 600,
+                          color: 'text.primary',
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        Bonus Applicable
+                      </Typography>
+                      <Box
+                        onClick={() => setBonusApplicable(!bonusApplicable)}
+                        sx={{
+                          width: 52,
+                          height: 28,
+                          borderRadius: 14,
+                          backgroundColor: bonusApplicable ? 'primary.main' : 'grey.400',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          px: 0.25,
+                          position: 'relative',
+                          '&:hover': {
+                            boxShadow: bonusApplicable ? '0 0 0 8px rgba(33, 150, 243, 0.15)' : '0 0 0 8px rgba(0, 0, 0, 0.1)',
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: '50%',
+                            backgroundColor: 'white',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                            transition: 'all 0.3s ease',
+                            transform: bonusApplicable ? 'translateX(24px)' : 'translateX(0px)',
+                          }}
+                        />
+                      </Box>
+                    </Box>
+
+                    <Button 
+                      variant={hasProcessorOrderChanges() ? "contained" : "outlined"}
+                      size="medium"
+                      onClick={handleSaveProcessorOrder}
+                      disabled={savingOrder === 'processors' || !hasProcessorOrderChanges()}
+                      startIcon={savingOrder === 'processors' ? <CircularProgress size={16} color="inherit" /> : null}
+                      sx={{ 
+                        borderRadius: 3,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1,
+                        fontSize: '0.875rem',
+                        minWidth: 120,
+                        bgcolor: hasProcessorOrderChanges() ? 'primary.main' : 'transparent',
+                        color: hasProcessorOrderChanges() ? 'white' : 'primary.main',
+                        borderColor: 'primary.main',
+                        '&:hover': {
+                          bgcolor: hasProcessorOrderChanges() ? 'primary.dark' : 'primary.lighter',
+                        },
+                        '&:disabled': {
+                          bgcolor: hasProcessorOrderChanges() ? 'primary.light' : 'transparent',
+                          color: hasProcessorOrderChanges() ? 'white' : 'text.disabled',
+                        }
+                      }}
+                    >
+                      {savingOrder === 'processors' ? 'Saving...' : hasProcessorOrderChanges() ? 'Save Changes' : 'Save Order'}
+                    </Button>
+                  </Stack>
+
+                <TableContainer 
+                  component={Paper} 
+                  variant="outlined"
+                  sx={{ 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                    bgcolor: 'background.paper',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                    '& .MuiTableCell-head': {
+                      backgroundColor: 'grey.50',
+                      fontWeight: 700,
+                      fontSize: '0.875rem',
+                      color: 'text.primary',
+                      borderBottom: '2px solid',
+                      borderColor: 'divider',
+                      py: 1.5
+                    }
+                  }}
+                >
+                  <Table size="medium" sx={{ minWidth: 650 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ 
+                          width: '50px', 
+                          textAlign: 'center'
+                        }}>
+                          #
+                        </TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell sx={{ 
+                          width: '120px', 
+                          textAlign: 'center' 
+                        }}>
+                          Price
+                        </TableCell>
+                        <TableCell sx={{ 
+                          width: '120px', 
+                          textAlign: 'center' 
+                        }}>
+                          Bonus
+                        </TableCell>
+                        <TableCell sx={{ 
+                          width: '180px', 
+                          textAlign: 'center' 
+                        }}>
+                          Order
+                        </TableCell>
+                        <TableCell sx={{ 
+                          width: '120px', 
+                          textAlign: 'center' 
+                        }}>
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {data.parentCategories.map((processor: any, index: number) => (
+                        <TableRow 
+                          key={processor.id} 
+                          hover
+                          sx={{ 
+                            '&:nth-of-type(odd)': { 
+                              bgcolor: 'action.hover' 
+                            },
+                            '&:hover': { 
+                              bgcolor: 'primary.lighter',
+                              transition: 'background-color 0.2s ease'
+                            },
+                            '& td': {
+                              py: 1.5,
+                              fontSize: '0.875rem',
+                              borderBottom: '1px solid',
+                              borderColor: 'divider'
+                            }
+                          }}
+                        >
+                          <TableCell sx={{ textAlign: 'center' }}>
+                            <Avatar
+                              sx={{
+                                width: 24,
+                                height: 24,
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                mx: 'auto'
+                              }}
+                            >
+                              {index + 1}
+                            </Avatar>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                              {processor.title}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                fontWeight: 500,
+                                color: 'success.main'
+                              }}
+                            >
+                              ₹{(processor.price || 0).toLocaleString()}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                fontWeight: 500,
+                              }}
+                            >
+                              ₹{(processor.bonus || 0).toLocaleString()}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>
+                            <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                              <Tooltip title="Move Up">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => moveProcessorUp(processor, index)}
+                                  disabled={index === 0}
+                                  sx={{ 
+                                    color: index === 0 ? 'text.disabled' : 'primary.main',
+                                    '&:hover': { bgcolor: index === 0 ? 'transparent' : 'primary.lighter' },
+                                    fontSize: '16px'
+                                    }}
+                                >
+                                  ↑
+                                </IconButton>
+                              </Tooltip>
+                              <TextField
+                                size="small"
+                                value={getProcessorOrder(processor.id, processor.order)}
+                                onChange={(e) => {
+                                  const newOrder = parseInt(e.target.value, 10);
+                                  if (!isNaN(newOrder) && newOrder !== processor.order) {
+                                    updateProcessorOrder(processor.id, newOrder);
+                                  }
+                                }}
+                                variant="outlined"
+                                type="number"
+                                inputProps={{ min: 1 }}
+                                sx={{ 
+                                  width: 70,
+                                  '& .MuiOutlinedInput-root': {
+                                    fontSize: '0.875rem',
+                                    bgcolor: getProcessorOrder(processor.id, processor.order) !== processor.order ? 'warning.lighter' : 'transparent',
+                                    '& fieldset': {
+                                      borderColor: getProcessorOrder(processor.id, processor.order) !== processor.order ? 'warning.main' : 'divider',
+                                      borderWidth: getProcessorOrder(processor.id, processor.order) !== processor.order ? 2 : 1,
+                                    }
+                                  }
+                                }}
+                              />
+                              <Tooltip title="Move Down">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => moveProcessorDown(processor, index)}
+                                  disabled={index === data.parentCategories.length - 1}
+                                  sx={{ 
+                                    color: (data?.parentCategories && index === data.parentCategories.length - 1) ? 'text.disabled' : 'primary.main',
+                                    '&:hover': { bgcolor: (data?.parentCategories && index === data.parentCategories.length - 1) ? 'transparent' : 'primary.lighter' },
+                                    fontSize: '16px'
+                                    }}
+                                >
+                                  ↓
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>
+                            <Stack direction="row" spacing={0.5} justifyContent="center">
+                              <Tooltip title="Edit">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleEditProcessor(processor)}
+                                  sx={{ 
+                                    color: 'primary.main',
+                                    '&:hover': { bgcolor: 'primary.lighter' }
+                                  }}
+                                >
+                                  <Iconify icon="solar:pen-bold" width={16} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Delete">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleDeleteProcessor(processor.id, processor.title)}
+                                  sx={{ 
+                                    color: 'error.main',
+                                    '&:hover': { bgcolor: 'error.lighter' }
+                                  }}
+                                >
+                                  <Iconify icon="solar:trash-bin-trash-bold" width={16} />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                
+                {(!data.parentCategories || data.parentCategories.length === 0) && (
+                  <Box 
+                    sx={{ 
+                      textAlign: 'center', 
+                      py: 4,
+                      color: 'text.secondary'
+                    }}
+                  >
+                    <Typography variant="body2">
+                      No processors configured yet. Click "Add New +" to get started.
+                    </Typography>
+                  </Box>
+                )}
+                    </>
+                  )}
               </Box>
-            </Stack>
-          </Card>
+            </Card>
+          )}
         </Box>
       </Stack>
 
@@ -990,6 +1551,16 @@ export function AdminSettingsMacView() {
           windowsData={data}
         />
       )}
+
+      {/* Mac Processor Modal */}
+      <ProcessorModal
+        open={processorModalOpen}
+        onClose={handleProcessorModalClose}
+        onSuccess={handleProcessorModalSuccess}
+        editProcessor={editingProcessor}
+        configType="MAC_SERIES"
+        isParent={1}
+      />
     </Container>
   );
 }

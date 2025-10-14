@@ -1192,6 +1192,20 @@ class ApiService {
     });
   }
 
+  /**
+   * Save system configuration order
+   */
+  async saveSystemConfigOrder(orderData: {
+    config_type: string;
+    item_ids: string[];
+    is_mac: number;
+  }): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    return this.request<{ success: boolean; message: string }>('/api/system/system-config-save-order', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
+  }
+
 }
 
 export const apiService = new ApiService();
