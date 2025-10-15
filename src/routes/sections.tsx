@@ -39,6 +39,8 @@ export const AdminMediaPage = lazy(() => import('src/pages/admin-media'));
 export const AdminCustomersPage = lazy(() => import('src/pages/admin-customers'));
 export const AdminVendorsPage = lazy(() => import('src/pages/admin-vendors'));
 export const UserDashboardPage = lazy(() => import('src/pages/user-dashboard'));
+export const UserProfilePage = lazy(() => import('src/pages/user-profile'));
+export const UserOrdersPage = lazy(() => import('src/pages/user-orders'));
 export const UnauthorizedPage = lazy(() => import('src/pages/unauthorized'));
 export const AdminOrderStatusPage = lazy(() => import('src/pages/admin-order-status'));
 
@@ -315,12 +317,24 @@ export const routesSection: RouteObject[] = [
     ),
   },
   {
-    path: 'user/dashboard',
+    path: 'user/profile',
     element: (
       <UserProtectedRoute>
         <UserLayout>
           <Suspense fallback={renderFallback()}>
-            <UserDashboardPage />
+            <UserProfilePage />
+          </Suspense>
+        </UserLayout>
+      </UserProtectedRoute>
+    ),
+  },
+  {
+    path: 'user/orders',
+    element: (
+      <UserProtectedRoute>
+        <UserLayout>
+          <Suspense fallback={renderFallback()}>
+            <UserOrdersPage />
           </Suspense>
         </UserLayout>
       </UserProtectedRoute>

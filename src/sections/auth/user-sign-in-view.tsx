@@ -29,7 +29,7 @@ export function UserSignInView() {
     // For demo purposes, we'll just navigate to user dashboard
     localStorage.setItem('userType', 'user');
     localStorage.setItem('isAuthenticated', 'true');
-    router.push('/user/dashboard');
+    router.push('/user/profile');
   }, [router]);
 
   const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {

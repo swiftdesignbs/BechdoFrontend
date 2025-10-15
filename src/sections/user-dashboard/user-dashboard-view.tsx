@@ -21,7 +21,29 @@ export function UserDashboardView() {
   const handleLogout = useCallback(() => {
     localStorage.removeItem('userType');
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('customerId');
+    localStorage.removeItem('user');
     router.push('/');
+  }, [router]);
+
+  const handleQuickAction = useCallback((actionTitle: string) => {
+    switch (actionTitle) {
+      case 'Update Profile':
+        router.push('/user/profile');
+        break;
+      case 'View Reports':
+        // Add reports navigation here
+        break;
+      case 'Settings':
+        router.push('/user/profile');
+        break;
+      case 'Help Center':
+        // Add help center navigation here
+        break;
+      default:
+        break;
+    }
   }, [router]);
 
   const userStats = [
@@ -68,22 +90,6 @@ export function UserDashboardView() {
             Here&apos;s what&apos;s happening with your account today.
           </Typography>
         </Stack>
-        <Button 
-          variant="outlined" 
-          color="inherit" 
-          onClick={handleLogout}
-          startIcon={<Iconify icon="solar:restart-bold" />}
-          sx={{ 
-            fontWeight: 600,
-            borderColor: alpha(theme.palette.text.primary, 0.2),
-            '&:hover': {
-              borderColor: theme.palette.text.primary,
-              bgcolor: alpha(theme.palette.text.primary, 0.04),
-            }
-          }}
-        >
-          Logout
-        </Button>
       </Stack>
     </Box>
   );
@@ -166,6 +172,7 @@ export function UserDashboardView() {
             variant="outlined"
             size="large"
             startIcon={<Iconify icon={action.icon} />}
+            onClick={() => handleQuickAction(action.title)}
             sx={{
               p: 2,
               justifyContent: 'flex-start',

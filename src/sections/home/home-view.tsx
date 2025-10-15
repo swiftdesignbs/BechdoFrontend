@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -9,6 +9,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import { useRouter } from 'src/routes/hooks';
@@ -17,6 +19,7 @@ import { CONFIG } from 'src/config-global';
 
 import { Logo } from 'src/components/logo';
 import { Iconify } from 'src/components/iconify';
+import { authService } from 'src/utils/auth-service';
 
 import { LoginModal } from './login-modal';
 
@@ -26,6 +29,16 @@ export function HomeView() {
   const theme = useTheme();
   const router = useRouter();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userType, setUserType] = useState<string | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    setIsAuthenticated(authState.isAuthenticated);
+    setUserType(authState.userType);
+  }, []);
 
   const handleLoginClick = useCallback(() => {
     setLoginModalOpen(true);
@@ -38,6 +51,39 @@ export function HomeView() {
   const handleUserLogin = useCallback(() => {
     router.push('/user/sign-in');
   }, [router]);
+
+  const handleAccountMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  }, []);
+
+  const handleAccountMenuClose = useCallback(() => {
+    setAnchorEl(null);
+  }, []);
+
+  const handleGoToDashboard = useCallback(() => {
+    if (userType === 'admin') {
+      router.push('/admin/dashboard');
+    } else if (userType === 'user') {
+      router.push('/user/profile');
+    }
+    handleAccountMenuClose();
+  }, [router, userType]);
+
+  const handleLoginSuccess = useCallback(() => {
+    // Refresh authentication state after successful login
+    const authState = authService.getAuthState();
+    setIsAuthenticated(authState.isAuthenticated);
+    setUserType(authState.userType);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    authService.logout();
+    setIsAuthenticated(false);
+    setUserType(null);
+    handleAccountMenuClose();
+    // Optionally refresh the page to reset state
+    window.location.reload();
+  }, []);
 
   const navigationItems = [
     { label: 'Home', href: '/' },
@@ -97,14 +143,45 @@ export function HomeView() {
           ))}
         </Stack>
 
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleLoginClick}
-          sx={{ fontWeight: 600 }}
-        >
-          Login
-        </Button>
+        {isAuthenticated ? (
+          <>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={handleAccountMenuOpen}
+              endIcon={<Iconify icon="eva:arrow-down-fill" />}
+              sx={{ fontWeight: 600 }}
+            >
+              My Account
+            </Button>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleAccountMenuClose}
+              PaperProps={{
+                sx: { mt: 1, minWidth: 180 }
+              }}
+            >
+              <MenuItem onClick={handleGoToDashboard}>
+                <Iconify icon="eva:person-fill" sx={{ mr: 1 }} />
+                Dashboard
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <Iconify icon="eva:log-out-fill" sx={{ mr: 1 }} />
+                Logout
+              </MenuItem>
+            </Menu>
+          </>
+        ) : (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleLoginClick}
+            sx={{ fontWeight: 600 }}
+          >
+            Login
+          </Button>
+        )}
       </Toolbar>
     </AppBar>
   );
@@ -366,6 +443,7 @@ export function HomeView() {
         open={loginModalOpen}
         onClose={handleLoginModalClose}
         onUserLogin={handleUserLogin}
+        onLoginSuccess={handleLoginSuccess}
       />
     </>
   );

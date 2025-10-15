@@ -1,6 +1,6 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -29,12 +29,36 @@ export type AccountPopoverProps = IconButtonProps & {
 
 export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps) {
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<{
+    name: string;
+    email: string;
+    mobile: string;
+  } | null>(null);
+
+  // Load current user data from localStorage
+  useEffect(() => {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setCurrentUser({
+          name: user.customer_name || 'User',
+          email: user.email || '',
+          mobile: user.mobile || '',
+        });
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
 
   const handleLogout = useCallback(() => {
       localStorage.removeItem('userType');
       localStorage.removeItem('isAuthenticated');
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
+      localStorage.removeItem('customerId');
+      localStorage.removeItem('user');
       router.push('/');
     }, [router]);
 
@@ -72,8 +96,8 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         }}
         {...other}
       >
-        <Avatar src={_myAccount.photoURL} alt={_myAccount.displayName} sx={{ width: 1, height: 1 }}>
-          {_myAccount.displayName.charAt(0).toUpperCase()}
+        <Avatar src={_myAccount.photoURL} alt={currentUser?.name || _myAccount.displayName} sx={{ width: 1, height: 1 }}>
+          {(currentUser?.name || _myAccount.displayName).charAt(0).toUpperCase()}
         </Avatar>
       </IconButton>
 
@@ -91,17 +115,31 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
       >
         <Box sx={{ p: 2, pb: 1.5 }}>
           <Typography variant="subtitle2" noWrap>
-            {_myAccount?.displayName}
+            {currentUser?.name || _myAccount?.displayName}
           </Typography>
 
-          <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-            {_myAccount?.email}
-          </Typography>
+          {currentUser?.email && (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
+              {currentUser.email}
+            </Typography>
+          )}
+
+          {currentUser?.mobile && (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
+              📱 {currentUser.mobile}
+            </Typography>
+          )}
+
+          {!currentUser?.email && !currentUser?.mobile && (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
+              {_myAccount?.email}
+            </Typography>
+          )}
         </Box>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
 
-        <MenuList
+        {/* <MenuList
           disablePadding
           sx={{
             p: 1,
@@ -132,9 +170,9 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
               {option.label}
             </MenuItem>
           ))}
-        </MenuList>
+        </MenuList> */}
 
-        <Divider sx={{ borderStyle: 'dashed' }} />
+        {/* <Divider sx={{ borderStyle: 'dashed' }} /> */}
 
         <Box sx={{ p: 1 }}>
           <Button fullWidth color="error" size="medium" variant="text" onClick={handleLogout}>

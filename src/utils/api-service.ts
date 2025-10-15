@@ -47,6 +47,86 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface CustomerLoginRequest {
+  mobile: string;
+  isVendor: number;
+  channel_partner_id?: string;
+}
+
+export interface CustomerLoginResponse {
+  success: boolean;
+  message?: string;
+  data?: any;
+}
+
+export interface OTPVerifyRequest {
+  mobile: string;
+  otp: string;
+}
+
+export interface OTPVerifyResponse {
+  result: boolean;
+  token?: string;
+  customer?: {
+    id: number;
+    customer_name: string | null;
+    company_name: string | null;
+    sale_tax: string | null;
+    email: string | null;
+    mobile: string;
+    address: string | null;
+    state: string | null;
+    city: string | null;
+    zipcode: string | null;
+    otp: string;
+    status: number;
+    isVendor: number;
+    vendorCode: string | null;
+    channel_partner_id: number | null;
+  };
+}
+
+export interface ProfileUpdateRequest {
+  fullname: string;
+  email: string;
+  address: string;
+  state: string;
+  pincode: string;
+}
+
+export interface ProfileUpdateResponse {
+  success: boolean;
+  message?: string;
+  data?: any;
+}
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  success: boolean;
+  message?: string;
+  data?: any;
+}
+
+export interface State {
+  id: number;
+  name: string;
+  country_id: number;
+}
+
+export interface StatesListResponse {
+  data: State[];
+  pagination?: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+  };
+}
+
 export interface LoginResponse {
   token?: string;
   user?: {
@@ -910,6 +990,55 @@ class ApiService {
     });
   }
 
+  /**
+   * Customer login (Send OTP)
+   */
+  async customerLogin(loginData: CustomerLoginRequest): Promise<ApiResponse<CustomerLoginResponse>> {
+    return this.request<CustomerLoginResponse>('/api/customer/login', {
+      method: 'POST',
+      body: JSON.stringify(loginData),
+    });
+  }
+
+  /**
+   * Verify OTP
+   */
+  async verifyOTP(otpData: OTPVerifyRequest): Promise<ApiResponse<OTPVerifyResponse>> {
+    return this.request<OTPVerifyResponse>('/api/customer/otpverify', {
+      method: 'POST',
+      body: JSON.stringify(otpData),
+    });
+  }
+
+  /**
+   * Update customer profile
+   */
+  async updateProfile(profileData: ProfileUpdateRequest): Promise<ApiResponse<ProfileUpdateResponse>> {
+    return this.request<ProfileUpdateResponse>('/api/customer/profileUpdate', {
+      method: 'POST',
+      body: JSON.stringify(profileData),
+    });
+  }
+
+  /**
+   * Change customer password
+   */
+  async changePassword(passwordData: ChangePasswordRequest): Promise<ApiResponse<ChangePasswordResponse>> {
+    return this.request<ChangePasswordResponse>('/api/customer/changePassword', {
+      method: 'POST',
+      body: JSON.stringify(passwordData),
+    });
+  }
+
+  /**
+   * Get states list with pagination
+   */
+  async getStates(page: number = 1, limit: number = 50): Promise<ApiResponse<StatesListResponse>> {
+    return this.request<StatesListResponse>(`/api/state?page=${page}&limit=${limit}`, {
+      method: 'GET',
+    });
+  }
+
   // ----------------------------------------------------------------------
   // Vendor MANAGEMENT APIs
   // ----------------------------------------------------------------------
@@ -978,6 +1107,24 @@ class ApiService {
     return this.request<any>(`/api/orders/${orderId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Get user orders with pagination
+   */
+  async getMyOrders(page: number = 1, limit: number = 10): Promise<ApiResponse<any>> {
+    return this.request<any>(`/api/my-order?page=${page}&limit=${limit}`, {
+      method: 'GET',
+    });
+  }
+
+  /**
+   * Get single user order by ID
+   */
+  async getMyOrderById(orderId: number): Promise<ApiResponse<any>> {
+    return this.request<any>(`/api/my-order/${orderId}`, {
+      method: 'GET',
     });
   }
 

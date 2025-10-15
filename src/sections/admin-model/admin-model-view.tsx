@@ -134,6 +134,8 @@ export function AdminModelView() {
     localStorage.removeItem('userType');
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('authToken');
+    localStorage.removeItem('customerId');
+    localStorage.removeItem('user');
     router.push('/');
   }, [router]);
 
