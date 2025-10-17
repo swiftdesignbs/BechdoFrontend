@@ -1353,6 +1353,47 @@ class ApiService {
     });
   }
 
+  // ----------------------------------------------------------------------
+  // DASHBOARD APIs
+  // ----------------------------------------------------------------------
+
+  /**
+   * Get dashboard statistics
+   */
+  async getDashboardStats(): Promise<ApiResponse<{
+    totalOrders: number;
+    totalRegisters: number;
+    totalApproved: number;
+    ordersByMonth: {
+      jan: number;
+      feb: number;
+      mar: number;
+      apr: number;
+      may: number;
+      jun: number;
+      jul: number;
+      aug: number;
+      sep: number;
+      oct: number;
+      nov: number;
+      dec: number;
+    };
+    ordersByBrand: {
+      apple: number;
+      acer: number;
+      lenovo: number;
+      hp: number;
+      dell: number;
+      asus: number;
+    };
+    companyData: any[];
+    userFiles: any[];
+  }>> {
+    return this.request('/api/dashboard', {
+      method: 'GET',
+    });
+  }
+
 }
 
 export const apiService = new ApiService();
