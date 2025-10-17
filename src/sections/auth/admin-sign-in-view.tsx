@@ -27,8 +27,8 @@ export function AdminSignInView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    email: 'admin',
-    password: '123456',
+    email: '',
+    password: '',
   });
 
   const handleSignIn = useCallback(async () => {
