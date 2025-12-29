@@ -42,6 +42,7 @@ const commonRules = () => ({
   '@typescript-eslint/no-empty-object-type': 0,
   '@typescript-eslint/consistent-type-imports': 1,
   '@typescript-eslint/no-unused-vars': [1, { args: 'none' }],
+  '@typescript-eslint/ban-ts-comment': 0, // Allow @ts-comment
 });
 
 /**

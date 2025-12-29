@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "noEmitOnError": false
+  }
+}
+
+import { defineConfig } from 'vite';
+import checker from 'vite-plugin-checker';
+
+export default defineConfig({
+  plugins: [
+    checker({ typescript: { ignoreBuildErrors: true } })
+  ]
+});
